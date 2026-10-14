@@ -1,0 +1,29 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ML Model Integration · ThreatLens AI</title><link rel="stylesheet" href="docs.css"></head><body><header><div class="top"><a class="brand" href="index.html">THREATLENS <span>AI</span> / DOCS</a><nav><a href="DOCUMENTATION_GUIDE.html">Setup &amp; Operations</a><a href="API_REFERENCE.html">API Reference</a><a href="ARCHITECTURE.html">Architecture &amp; Threat Model</a><a href="ML_MODEL_INTEGRATION.html">ML Model Integration</a><a href="DASHBOARD_ANALYTICS.html">Dashboard Analytics</a><a href="YARA_LIBRARY_AND_MAPPING.html">YARA Rules &amp; Mapping</a><a href="TESTING.html">Testing Guide</a><a href="ROLE_FUNCTIONALITY_AND_ANALYTICS.html">Role Workflows</a><a href="VERIFICATION_REPORT.html">Verification Report</a></nav></div></header><main><article><h1>ML Model Integration and Validation</h1>
+<h2>Artifact contract</h2>
+<p>Expected files:</p>
+<pre><code class="language-text">backend/ml/artifacts/
+  malware_classifier.pkl
+  feature_schema.json
+  metrics.json            # optional but recommended from the same training run
+</code></pre>
+<p>The artifact and schema must originate from the same training run. Do not rename another model to <code>malware_classifier.pkl</code> and assume compatibility. Joblib/pickle artifacts must be trusted because deserialization can execute code.</p>
+<h2>Schema parsing</h2>
+<p>The adapter reads feature names from <code>feature_names</code>, <code>feature_columns_in_input_order</code>, <code>feature_columns</code>, <code>features</code>, or <code>columns</code>. It rejects an empty schema and duplicate names. If the loaded estimator exposes <code>feature_names_in_</code>, its order must match the schema. Inference is skipped when required fields are missing; the service does not fill unknown fields with zero or invented behavior values.</p>
+<h2>Features the live extractor can measure</h2>
+<p>For valid PE files, the extractor attempts DOS/file/optional-header fields, section entropy/size/address/characteristics summaries, import-derived suspicious-function counts, and data-directory metadata. Generic file size/entropy, string counts, URL/IP counts and selected indicators are also recorded. Feature extraction requires <code>pefile</code> for PE structure parsing.</p>
+<h2>Features it cannot infer from a static file alone</h2>
+<p>Actual registry reads/writes, process creation, runtime network activity, API call sequences, memory behavior and similar telemetry require dynamic instrumentation or an appropriate labeled telemetry source. A string naming a registry key or API is not proof that the behavior occurred. Such fields remain missing, so a model that requires them is marked unavailable.</p>
+<h2>Label and score handling</h2>
+<p>The adapter maps common binary labels such as <code>1</code>/<code>Malware</code> and <code>0</code>/<code>Benign</code>. If <code>predict_proba</code> is available, it reports the model's corresponding Malware-class score when the class mapping can be determined. This value is not necessarily calibrated probability. Always display model unavailability/errors separately from a benign prediction.</p>
+<h2>Validation checklist</h2>
+<ol>
+<li>Verify artifact and schema are present at configured paths.</li>
+<li>Verify <code>schema_feature_count</code> and exact names/order.</li>
+<li>Confirm feature definitions, units, preprocessing, missing-value handling and category encoding match training.</li>
+<li>Align scikit-learn and dependent library versions with the training environment.</li>
+<li>Test known benign/malicious labeled holdout examples in a controlled environment; inspect individual errors.</li>
+<li>Record precision, recall, F1, ROC-AUC/PR-AUC only on labeled held-out data with the correct denominator.</li>
+<li>Compare model-only, YARA-only and heuristic results separately. Do not train or report ML accuracy from unlabeled production uploads.</li>
+<li>Do not claim end-to-end model verification until the actual model and paired schema are installed and tests pass.</li>
+</ol>
+</article><p class="foot">ThreatLens AI · Local documentation · Static triage only</p></main></body></html>

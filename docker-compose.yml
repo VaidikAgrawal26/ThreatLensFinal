@@ -1,0 +1,26 @@
+services:
+  backend:
+    build: ./backend
+    env_file:
+      - ./backend/.env
+    container_name: threatlens-backend
+    environment:
+      DATABASE_URL: sqlite:///./data/threatlens.db
+      CORS_ORIGINS: http://localhost:5173
+      MAX_UPLOAD_MB: 25
+      MODEL_PATH: ml/artifacts/malware_classifier.pkl
+      FEATURE_SCHEMA_PATH: ml/artifacts/feature_schema.json
+    ports: ["8000:8000"]
+    volumes:
+      - threatlens_data:/app/data
+      - ./backend/ml/artifacts:/app/ml/artifacts:ro
+      - ./backend/yara_rules:/app/yara_rules:ro
+  frontend:
+    build: ./frontend
+    container_name: threatlens-frontend
+    depends_on: [backend]
+    ports: ["5173:5173"]
+    environment:
+      VITE_API_URL: http://localhost:8000
+volumes:
+  threatlens_data:

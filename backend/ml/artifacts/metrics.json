@@ -1,0 +1,44 @@
+{
+  "selected_model": "LightGBM",
+  "selected_test_metrics": {
+    "model": "LightGBM",
+    "accuracy": 0.9955,
+    "precision_malware": 0.9920556107249255,
+    "recall_malware": 0.999,
+    "f1_malware": 0.9955156950672646,
+    "roc_auc": 0.999958,
+    "pr_auc_average_precision": 0.9999580940632897
+  },
+  "cv_results": [
+    {
+      "model": "RandomForest",
+      "best_cv_f1": 0.9915521973882878,
+      "best_params": {
+        "classifier__n_estimators": 250,
+        "classifier__min_samples_leaf": 2,
+        "classifier__max_features": 0.5,
+        "classifier__max_depth": 20
+      }
+    },
+    {
+      "model": "ExtraTrees",
+      "best_cv_f1": 0.989828249940571,
+      "best_params": {
+        "classifier__n_estimators": 400,
+        "classifier__min_samples_leaf": 2,
+        "classifier__max_features": 0.8,
+        "classifier__max_depth": 20
+      }
+    },
+    {
+      "model": "LightGBM",
+      "best_cv_f1": 0.9937656447775686,
+      "best_params": {
+        "classifier__num_leaves": 31,
+        "classifier__n_estimators": 350,
+        "classifier__max_depth": 8,
+        "classifier__learning_rate": 0.1
+      }
+    }
+  ]
+}

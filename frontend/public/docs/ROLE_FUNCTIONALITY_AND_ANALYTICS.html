@@ -1,0 +1,60 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Role Workflows · ThreatLens AI</title><link rel="stylesheet" href="docs.css"></head><body><header><div class="top"><a class="brand" href="index.html">THREATLENS <span>AI</span> / DOCS</a><nav><a href="DOCUMENTATION_GUIDE.html">Setup &amp; Operations</a><a href="API_REFERENCE.html">API Reference</a><a href="ARCHITECTURE.html">Architecture &amp; Threat Model</a><a href="ML_MODEL_INTEGRATION.html">ML Model Integration</a><a href="DASHBOARD_ANALYTICS.html">Dashboard Analytics</a><a href="YARA_LIBRARY_AND_MAPPING.html">YARA Rules &amp; Mapping</a><a href="TESTING.html">Testing Guide</a><a href="ROLE_FUNCTIONALITY_AND_ANALYTICS.html">Role Workflows</a><a href="VERIFICATION_REPORT.html">Verification Report</a></nav></div></header><main><article><h1>Role Functionality and Analytics Inventory</h1>
+<h2>Authorization model</h2>
+<p>Four roles are stored on the server: <code>administrator</code>, <code>soc_member</code>, <code>security_analyst</code>, and <code>researcher</code>. Public registration always creates a Researcher. Administrator-only routes manage users/roles/status, view audit events, and add/remove local YARA files. Scan/history/analytics/YARA inventory/model readiness routes require a valid bearer token. The frontend derives its role view from the authenticated user returned by the server; client-side role selection is not used as a permission check.</p>
+<h2>Administrator workspace</h2>
+<ol>
+<li>Platform overview and scan analytics — stored scan records.</li>
+<li>Live scan and scan history — authenticated scan APIs.</li>
+<li>Notifications — derived from configured scan thresholds.</li>
+<li>YARA inventory — local rule files, compilation status, rule names/tags/metadata when available.</li>
+<li>Model readiness — configured artifact/schema presence and parse status.</li>
+<li>Rule updates — authenticated upload, compile-before-save and removal of local root-level rule files; no upstream auto-download.</li>
+<li>Audit review — persisted authentication and administrative events.</li>
+<li>System health — live <code>/health</code> response plus model-readiness display.</li>
+<li>User/role management — create user, assign roles, activate/deactivate; protected by backend RBAC.</li>
+<li>User/platform overview — API-backed totals are available; no full infrastructure telemetry is claimed.</li>
+</ol>
+<h2>SOC Team Member workspace</h2>
+<ol>
+<li>Overview/analytics from real scan history.</li>
+<li>Live scan and stored history.</li>
+<li>Notifications from high-risk/YARA signals.</li>
+<li>Alert triage table sorted by risk/severity.</li>
+<li>Persistent incident records created from scan evidence, with status updates, assignment to active SOC/analyst/admin users, notes and audit events (not a full ITSM platform).</li>
+<li>Threat timeline from scan timestamps and risk scores (not cross-source event correlation).</li>
+<li>Response-playbook checklist for evidence handling (session-local only).</li>
+<li>Shift-handover high-risk view and CSV export.</li>
+<li>Evidence detail opens the actual scan record.</li>
+<li>Exportable scan history for handover.</li>
+</ol>
+<h2>Security Analyst workspace</h2>
+<ol>
+<li>Overview and ten scan-derived chart types.</li>
+<li>Live file scan.</li>
+<li>Scan history/detail.</li>
+<li>YARA match evidence in individual scan results when YARA engine/rules are installed.</li>
+<li>File indicator review (hashes, strings, URLs/IPs, PE metadata where supported).</li>
+<li>ML readiness and actual model output/availability.</li>
+<li>Evidence comparison across separate ML/YARA/static channels.</li>
+<li>Investigation JSON/CSV report.</li>
+<li>YARA inventory and compile-status inspection.</li>
+<li>Risk component breakdown with capped additive heuristic explanation.</li>
+</ol>
+<h2>Researcher workspace</h2>
+<ol>
+<li>Overview and ten scan-derived chart types.</li>
+<li>Live scan and historical records.</li>
+<li>Dataset Explorer of this instance's scans with human-entered ground-truth label/family/source annotations (not an external raw-sample repository).</li>
+<li>Family Research guidance based on actual rule evidence; no definitive family attribution.</li>
+<li>Feature Distribution chart from measured stored features.</li>
+<li>Experiment Notes persisted per authenticated user in the database.</li>
+<li>CSV research export.</li>
+<li>Security summary JSON export.</li>
+<li>Comparison of available ML outputs vs YARA matches.</li>
+<li>Documentation and reproducibility workflow.</li>
+</ol>
+<h2>Chart inventory</h2>
+<p>The Overview contains line, bar, donut, heatmap, scatter, stacked bar, funnel, histogram, radar and treemap visualizations. Each uses stored records. Role-specific captions explain the intended use. See <a href="DASHBOARD_ANALYTICS.html">Dashboard Analytics</a> for definitions and limitations. Ground-truth accuracy metrics are intentionally omitted unless an evaluation dataset with labels is provided.</p>
+<h2>Remaining boundaries</h2>
+<p>This is a local prototype, not a production SOC suite. It has no persisted incident assignment/status workflow, no external threat-feed synchronization, no runtime telemetry, no curated malware repository, no SHAP-based explanations, and no tamper-evident audit log. YARA engine and rule collections are separate; the ZIP includes only the illustrative demo rule and the local rule-management interface.</p>
+</article><p class="foot">ThreatLens AI · Local documentation · Static triage only</p></main></body></html>

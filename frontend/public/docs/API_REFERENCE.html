@@ -1,0 +1,218 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>API Reference · ThreatLens AI</title><link rel="stylesheet" href="docs.css"></head><body><header><div class="top"><a class="brand" href="index.html">THREATLENS <span>AI</span> / DOCS</a><nav><a href="DOCUMENTATION_GUIDE.html">Setup &amp; Operations</a><a href="API_REFERENCE.html">API Reference</a><a href="ARCHITECTURE.html">Architecture &amp; Threat Model</a><a href="ML_MODEL_INTEGRATION.html">ML Model Integration</a><a href="DASHBOARD_ANALYTICS.html">Dashboard Analytics</a><a href="YARA_LIBRARY_AND_MAPPING.html">YARA Rules &amp; Mapping</a><a href="TESTING.html">Testing Guide</a><a href="ROLE_FUNCTIONALITY_AND_ANALYTICS.html">Role Workflows</a><a href="VERIFICATION_REPORT.html">Verification Report</a></nav></div></header><main><article><h1>ThreatLens AI API Reference</h1>
+<p>Base URL in the default local setup: <code>http://127.0.0.1:8001</code>. Interactive OpenAPI docs are at <code>/docs</code>.</p>
+<h2>Public endpoints</h2>
+<table>
+<thead>
+<tr>
+  <th>Method</th>
+  <th>Path</th>
+  <th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>GET</td>
+  <td><code>/</code></td>
+  <td>Service name and documentation pointers</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/health</code></td>
+  <td>Lightweight API health check; not a full dependency health check</td>
+</tr>
+<tr>
+  <td>POST</td>
+  <td><code>/api/auth/register</code></td>
+  <td>Create Researcher account; password minimum 10 characters</td>
+</tr>
+<tr>
+  <td>POST</td>
+  <td><code>/api/auth/login</code></td>
+  <td>Validate credentials and return signed bearer token + user</td>
+</tr>
+</tbody>
+</table>
+<h2>Authenticated endpoints</h2>
+<p>Send <code>Authorization: Bearer &lt;access_token&gt;</code>.</p>
+<table>
+<thead>
+<tr>
+  <th>Method</th>
+  <th>Path</th>
+  <th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>GET</td>
+  <td><code>/api/auth/me</code></td>
+  <td>Current authenticated user</td>
+</tr>
+<tr>
+  <td>POST</td>
+  <td><code>/api/auth/logout</code></td>
+  <td>Audit logout event; client must discard token</td>
+</tr>
+<tr>
+  <td>POST</td>
+  <td><code>/api/scans/upload</code></td>
+  <td>Multipart upload and immediate static analysis</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/scans?limit=100</code></td>
+  <td>Recent scan history (limit is capped)</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/scans/{scan_id}</code></td>
+  <td>Stored scan result including indicators and YARA evidence</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/analytics/overview</code></td>
+  <td>Scan totals, risk/severity/verdict counts, daily trend, recent scans</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/analytics/notifications</code></td>
+  <td>Records meeting configured alert thresholds</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/analytics/security-report</code></td>
+  <td>JSON summary and limitations</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/analytics/export.csv</code></td>
+  <td>CSV export of scan history</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/yara/rules</code></td>
+  <td>Local rule inventory and compile status</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/model/readiness</code></td>
+  <td>Model artifact/schema readiness, not accuracy</td>
+</tr>
+<tr>
+  <td>GET/POST</td>
+  <td><code>/api/incidents</code></td>
+  <td>List/create persistent incidents from scan records (SOC/analyst/admin)</td>
+</tr>
+<tr>
+  <td>PATCH</td>
+  <td><code>/api/incidents/{id}</code></td>
+  <td>Update incident status, assignee and notes</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/incidents/assignees</code></td>
+  <td>Active eligible incident assignees</td>
+</tr>
+<tr>
+  <td>GET/POST</td>
+  <td><code>/api/research/annotations</code></td>
+  <td>View/save human-entered scan labels and family/source notes</td>
+</tr>
+<tr>
+  <td>DELETE</td>
+  <td><code>/api/research/annotations/{id}</code></td>
+  <td>Remove an annotation you created or as administrator</td>
+</tr>
+<tr>
+  <td>GET/POST</td>
+  <td><code>/api/research/notes</code></td>
+  <td>List/create persistent private research notes for the current user</td>
+</tr>
+<tr>
+  <td>DELETE</td>
+  <td><code>/api/research/notes/{id}</code></td>
+  <td>Remove your own research note or as administrator</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/research/summary</code></td>
+  <td>Exploratory labeled prediction counts with limitations; not a substitute for holdout evaluation</td>
+</tr>
+</tbody>
+</table>
+<h2>Administrator-only endpoints</h2>
+<table>
+<thead>
+<tr>
+  <th>Method</th>
+  <th>Path</th>
+  <th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>GET</td>
+  <td><code>/api/admin/users</code></td>
+  <td>List user accounts</td>
+</tr>
+<tr>
+  <td>POST</td>
+  <td><code>/api/admin/users</code></td>
+  <td>Create account with explicit role</td>
+</tr>
+<tr>
+  <td>PATCH</td>
+  <td><code>/api/admin/users/{id}/role</code></td>
+  <td>Assign role</td>
+</tr>
+<tr>
+  <td>PATCH</td>
+  <td><code>/api/admin/users/{id}/status</code></td>
+  <td>Activate/deactivate account</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/admin/audit</code></td>
+  <td>Review persisted audit events</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/admin/overview</code></td>
+  <td>User/scan/audit totals</td>
+</tr>
+<tr>
+  <td>POST</td>
+  <td><code>/api/yara/rules</code></td>
+  <td>Upload and compile a reviewed YARA file (multipart <code>file</code>)</td>
+</tr>
+<tr>
+  <td>POST</td>
+  <td><code>/api/yara/ruleset</code></td>
+  <td>Import reviewed ZIP pack (multipart <code>file</code>, <code>source</code>, <code>version</code>, <code>license_name</code>); every rule is compiled before installation</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/yara/rulesets</code></td>
+  <td>List imported ruleset manifests/provenance</td>
+</tr>
+<tr>
+  <td>DELETE</td>
+  <td><code>/api/yara/rules/{filename}</code></td>
+  <td>Remove a local root-level YARA file; bundled demo is protected</td>
+</tr>
+</tbody>
+</table>
+<h2>Upload behavior</h2>
+<p>Allowed extensions: <code>.exe</code>, <code>.dll</code>, <code>.sys</code>, <code>.scr</code>, <code>.ocx</code>, <code>.bin</code>, <code>.dat</code>, <code>.pdf</code>, <code>.zip</code>. This is an extension allowlist, not a file authenticity check. Empty uploads are rejected; configured maximum size defaults to 25 MB. The service does not execute the upload. Scan result fields include hashes, static features, YARA matches/summary, ML availability/output, risk components and a disclaimer.</p>
+<h2>Error expectations</h2>
+<ul>
+<li><code>401</code>: missing/invalid/expired token.</li>
+<li><code>403</code>: authenticated role lacks permission.</li>
+<li><code>409</code>: duplicate account or duplicate YARA filename.</li>
+<li><code>413</code>: upload/rule file exceeds configured limit.</li>
+<li><code>415</code>: unsupported extension or rule file type.</li>
+<li><code>422</code>: invalid request/schema or YARA compile failure.</li>
+<li><code>503</code>: YARA upload management unavailable because <code>yara-python</code> is not installed.</li>
+</ul>
+<p>Never place passwords, bearer tokens or sensitive indicators in shared screenshots/reports.</p>
+</article><p class="foot">ThreatLens AI · Local documentation · Static triage only</p></main></body></html>

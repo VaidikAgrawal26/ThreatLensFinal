@@ -1,0 +1,39 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Architecture &amp; Threat Model · ThreatLens AI</title><link rel="stylesheet" href="docs.css"></head><body><header><div class="top"><a class="brand" href="index.html">THREATLENS <span>AI</span> / DOCS</a><nav><a href="DOCUMENTATION_GUIDE.html">Setup &amp; Operations</a><a href="API_REFERENCE.html">API Reference</a><a href="ARCHITECTURE.html">Architecture &amp; Threat Model</a><a href="ML_MODEL_INTEGRATION.html">ML Model Integration</a><a href="DASHBOARD_ANALYTICS.html">Dashboard Analytics</a><a href="YARA_LIBRARY_AND_MAPPING.html">YARA Rules &amp; Mapping</a><a href="TESTING.html">Testing Guide</a><a href="ROLE_FUNCTIONALITY_AND_ANALYTICS.html">Role Workflows</a><a href="VERIFICATION_REPORT.html">Verification Report</a></nav></div></header><main><article><h1>Architecture, Data Flow, and Threat Model</h1>
+<h2>Components</h2>
+<ol>
+<li><strong>React/Vite browser UI</strong> — landing page, authentication, four role-specific navigation sets, upload form, history, analytics, YARA inventory and role workflows.</li>
+<li><strong>FastAPI</strong> — request validation, bearer authentication, server-side role dependencies, scan/analytics/admin/YARA/model routes.</li>
+<li><strong>Static analyzer</strong> — SHA-256/MD5, entropy, printable strings, URLs/IPs, PE header/section/import extraction where <code>pefile</code> is available.</li>
+<li><strong>YARA adapter</strong> — recursively finds local <code>.yar</code>/<code>.yara</code> files, compiles them, applies each compiled file to the bytes with a timeout, and records matches/errors.</li>
+<li><strong>ML adapter</strong> — loads a trusted joblib artifact only when the matching schema exists; checks missing fields and model feature ordering before inference.</li>
+<li><strong>Risk layer</strong> — capped heuristic score with separate component values; it is not a calibrated probability.</li>
+<li><strong>SQLite/SQLAlchemy</strong> — users, scan JSON/history, audit events.</li>
+</ol>
+<h2>Request path</h2>
+<pre><code class="language-text">Login → signed bearer token → protected API request
+Upload → size/extension checks → hash/indicator extraction → PE features
+      → local YARA scan → compatible ML inference or explicit unavailable result
+      → risk components → database row → UI result/history/analytics
+</code></pre>
+<h2>Security controls present</h2>
+<ul>
+<li>PBKDF2-HMAC-SHA256 password hashes with per-password salt.</li>
+<li>Signed HMAC-SHA256 bearer tokens with expiry.</li>
+<li>Self-registration cannot assign privileged roles.</li>
+<li>Protected data routes require a valid token; account and YARA rule mutations require Administrator.</li>
+<li>Uploaded files are not intentionally executed; upload size and extension are constrained.</li>
+<li>YARA files are compiled before being added; path traversal and duplicate root-level names are rejected.</li>
+<li>Audit events record selected authentication/admin events.</li>
+</ul>
+<h2>Residual risks and required production controls</h2>
+<ul>
+<li>Use a unique, random <code>JWT_SECRET</code>, HTTPS, rate limiting, secure deployment secrets and account lockout/abuse monitoring.</li>
+<li>The audit table is not tamper-evident. Forward security logs to a separately controlled system for real incident response.</li>
+<li>Uploaded data may contain sensitive strings; define retention, authorization and redaction policies.</li>
+<li>No isolated malware sandbox, process telemetry, runtime monitoring, antivirus engine or external reputation lookup is bundled.</li>
+<li>A YARA rule can be expensive or erroneous; review sources and test timeouts/performance before deploying a large ruleset.</li>
+<li>Joblib/pickle files can execute code when deserialized. Load only trusted artifacts.</li>
+<li>SQLite is intended for local/small-scale use. Use migrations, backups and a managed database before multi-user production deployment.</li>
+<li>Browser-local notes are not server-persisted. Role workflows are not a full ticketing/incident assignment system.</li>
+</ul>
+</article><p class="foot">ThreatLens AI · Local documentation · Static triage only</p></main></body></html>

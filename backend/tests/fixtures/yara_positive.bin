@@ -1,0 +1,1 @@
+ThreatLens harmless YARA integration fixture. These strings are inert text and do not execute anything: VirtualAlloc WriteProcessMemory CreateRemoteThread.
