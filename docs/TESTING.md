@@ -38,11 +38,11 @@ Tests cover health, auth/registration policy, protected endpoints, upload/histor
 
 ## YARA tests
 1. Install `yara-python` from `requirements.txt`.
-2. Upload a harmless test fixture containing at least two of `VirtualAlloc`, `WriteProcessMemory`, `CreateRemoteThread`; expected demo rule: `ThreatLens_Demo_Suspicious_API_Strings`.
-3. Scan a benign fixture without these strings; expect no match for this demo rule.
+2. The automated YARA integration tests use a harmless rule fixture isolated under `backend/tests/fixtures/rules/`; this directory is not copied into the runtime image.
+3. For an operational deployment, install a reviewed ruleset and use its approved positive and negative fixtures; never treat no-match as proof of safety.
 4. Open YARA Library and verify local files, compile status, rule count, names/tags/meta and any errors.
-5. As Administrator, upload a valid `.yar` rule and confirm it appears; upload invalid syntax and expect 422; try duplicate names and expect 409; remove a non-demo local rule and confirm it disappears.
-6. Record source, license, version/commit, date and fixture hashes. The bundled demo rule is illustrative only.
+5. As Administrator, upload a valid `.yar` rule and confirm it appears; upload invalid syntax and expect 422; try duplicate names and expect 409; remove a local rule and confirm it disappears.
+6. Record source, license, version/commit, date and fixture hashes. No test-only rule is installed in the production rules directory.
 
 ## ML integration tests
 1. Confirm the configured Random Forest and paired schema exist under `backend/ml/artifacts/candidates/user_supplied_random_forest_2026-10-16/`.

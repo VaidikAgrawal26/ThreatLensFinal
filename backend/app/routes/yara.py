@@ -118,7 +118,6 @@ def delete_rule(filename:str,db:Session=Depends(get_db),actor:User=Depends(requi
     root=_root(); target=(root/filename).resolve()
     if root not in target.parents: raise HTTPException(400,"Invalid rule path")
     if not target.is_file(): raise HTTPException(404,"Rule file not found")
-    if target.name=="threatlens_demo.yar": raise HTTPException(400,"The bundled demo rule is protected from deletion")
     target.unlink()
     db.add(AuditLog(user_id=actor.id,actor_email=actor.email,action="yara.rule_removed",target=filename,details={}));db.commit()
     return {"message":"Rule file removed from local ruleset","filename":filename}

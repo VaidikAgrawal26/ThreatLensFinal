@@ -37,7 +37,7 @@ If Vite chooses a port other than 5173/5174, add the exact origin to `CORS_ORIGI
 
 Copy `.env.example` to `.env` for local Docker use, then run `docker compose up --build` from the project root. This starts PostgreSQL, the API on port 8000, and the frontend on port 5173. The example values are development-only. For deployment, create a private environment file with a unique JWT secret, strong database/admin passwords, domain and explicit origins, then use `docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile production --env-file .env.production up --build`. The production overlay keeps database/API ports private and uses Caddy for HTTPS. Configure DNS and allow inbound ports 80/443 at the host firewall.
 
-For a manually managed Render demo deployment, start with [the Render deployment guide](docs/RENDER_DEPLOYMENT.md) and the root [render.yaml](render.yaml) Blueprint. The Blueprint uses a temporary free Postgres plan for demonstration; select a persistent paid database plan if scan history must last beyond the free database's expiration window.
+For a manually managed Render demo deployment, start with [the Render deployment guide](docs/RENDER_DEPLOYMENT.md) and the root [render.yaml](render.yaml) Blueprint. The Blueprint uses a temporary free Postgres plan; select a persistent paid database plan if scan history must last beyond the free database's expiration window.
 
 ## Authentication and roles
 - Signup displays all four roles: Administrator, Security Analyst, SOC Team Member, and Researcher. The role is stored server-side and the login selection must match the saved role.
@@ -52,7 +52,7 @@ The active model is the user-supplied Random Forest at `backend/ml/artifacts/can
 The active Random Forest requires the pinned scikit-learn 1.9.1 runtime. It produces a static-file estimate by using its fitted median/mode imputers for missing telemetry; the app labels these predictions as partial and displays input coverage. This adaptation makes the existing model callable for PE uploads, but its 99.10% reported holdout metrics do not establish live-upload accuracy.
 
 ## YARA rules
-Only `backend/yara_rules/threatlens_demo.yar` is bundled by default. It is an illustrative test rule, not a maintained production ruleset. The Administrator → Rule Updates page allows reviewed local `.yar`/`.yara` files to be compiled and added or removed. No upstream ruleset is auto-downloaded. Verify source, version, license and performance before operational use. See [YARA Library and Mapping](docs/YARA_LIBRARY_AND_MAPPING.md).
+No YARA rules are bundled by default. Add reviewed, licensed local `.yar`/`.yara` files before relying on signature matches. The Administrator → Rule Updates page allows reviewed local `.yar`/`.yara` files to be compiled and added or removed. No upstream ruleset is auto-downloaded. Verify source, version, license and performance before operational use. See [YARA Library and Mapping](docs/YARA_LIBRARY_AND_MAPPING.md).
 
 ## Test and verify
 ```powershell
@@ -89,6 +89,6 @@ The login and registration forms display all four workspace roles: Administrator
 The active model path defaults to `ml/artifacts/candidates/user_supplied_random_forest_2026-10-16/threatlens_pe_random_forest.joblib`, with its paired schema in the same directory. Valid PE uploads receive a Random Forest estimate when core static fields are extractable; the saved pipeline imputes fields the static scanner cannot observe and each result reports coverage and missing runtime inputs. Treat partial estimates as triage signals, not observed behavior, proof of malware, or proof of safety.
 
 
-## Demo scan evidence and charts
+## Scan evidence and dashboard charts
 
-Every completed scan response includes a separate **Demo threat indicators · display only** panel. It shows inert, synthetic indicator strings and a non-executable code preview for demonstration. This panel is explicitly labelled as simulated, is not extracted from the uploaded file, is not a YARA match, and does not affect the actual verdict or risk score. The dashboard's ten analytics charts use persisted scans when available; before the first scan, they display labelled illustrative demo records so the graph layouts are visible. Demo chart records are never saved as real scan history and must not be used as detection metrics.
+Scan details display file-derived evidence only: extracted printable strings, embedded URLs/IP addresses, parsed PE imports and local YARA matches. The application does not inject synthetic threat indicators or code previews into scan results. Role dashboards show an empty state until real persisted scans exist; charts never synthesize scan records.

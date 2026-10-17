@@ -4,7 +4,7 @@
 
 Local and Docker Compose defaults now select the user-supplied Random Forest and its paired 72-feature schema. Backend requirements pin scikit-learn 1.9.1. The adapter canonicalizes categorical PE inputs against the fitted encoder vocabulary and lets the pipeline apply its saved imputers to missing runtime telemetry; scans expose partial coverage and missing-field warnings. This change has not been verified with a representative labeled PE corpus in this environment. The supplied 99.10% figure remains a random-split training metric, not a live-upload accuracy guarantee.
 
-## Verification run in this environment (2026-10-12)
+## Historical verification run (2026-10-12)
 
 ### Passed
 
@@ -16,7 +16,7 @@ Local and Docker Compose defaults now select the user-supplied Random Forest and
 ### Not passed / not run (do not treat as verified)
 
 - **Frontend production build:** not run. `npm install --no-audit --no-fund` timed out. The environment could not resolve `registry.npmjs.org`; no Vite or React dependencies are installed locally.
-- **Live YARA integration:** two tests are skipped because `yara-python` is not installed. The attempt to install dependencies failed because package-registry DNS resolution was unavailable. Only the illustrative demo rule is bundled.
+- **Live YARA integration:** two tests are skipped because `yara-python` is not installed. The attempt to install dependencies failed because package-registry DNS resolution was unavailable. No production YARA rules are bundled by default.
 - **PE parsing against real executable fixtures:** `pefile` is not installed, and dependency installation could not reach the package index.
 - **Model inference in a compatible runtime:** the configured Random Forest loads with scikit-learn 1.9.0, but emits `InconsistentVersionWarning` because it was serialized with scikit-learn 1.9.1. The service deliberately reports the mismatch instead of declaring inference ready; install the pinned `backend/requirements.txt` before attempting live inference.
 - **Representative live model prediction:** not verified. No labelled executable test corpus was available. The active model imputes unavailable runtime-behaviour fields (registry/network/process/file telemetry), marks the prediction partial, and can therefore be unreliable on static-only uploads.
@@ -39,4 +39,4 @@ These scripts install backend/frontend dependencies, run the backend suite and r
 - The active Random Forest applies its fitted training imputers to missing runtime telemetry and marks the result as a partial static estimate. This does not mean runtime behavior was observed, and it is not a substitute for a static-only model.
 - YARA matches are evidence, not proof of malware; no match does not establish benignness.
 - Accuracy, precision, recall, F1 and ROC-AUC must be based on independent labelled evaluation data, not unlabelled production scans.
-- The included ruleset is a demo rule, not a comprehensive maintained production ruleset.
+- The production rules directory has no rules by default; install a reviewed ruleset before relying on YARA coverage.

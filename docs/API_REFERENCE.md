@@ -49,7 +49,7 @@ Send `Authorization: Bearer <access_token>`.
 | POST | `/api/yara/rules` | Upload and compile a reviewed YARA file (multipart `file`) |
 | POST | `/api/yara/ruleset` | Import reviewed ZIP pack (multipart `file`, `source`, `version`, `license_name`); every rule is compiled before installation |
 | GET | `/api/yara/rulesets` | List imported ruleset manifests/provenance |
-| DELETE | `/api/yara/rules/{filename}` | Remove a local root-level YARA file; bundled demo is protected |
+| DELETE | `/api/yara/rules/{filename}` | Remove a local root-level YARA file |
 
 ## Upload behavior
 Allowed extensions: `.exe`, `.dll`, `.sys`, `.scr`, `.ocx`, `.bin`, `.dat`, `.pdf`, `.zip`. Obvious PE, PDF and ZIP extension/signature mismatches are rejected; `.bin` and `.dat` remain generic byte containers. Empty uploads are rejected; configured maximum size defaults to 25 MB. Analysis runs off the ASGI event loop. Submitted bytes are not retained; only the scan evidence record is persisted. The service does not execute the upload. Scan result fields include hashes, measured static features, YARA matches/summary, explicit ML availability, risk components and a disclaimer.

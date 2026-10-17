@@ -1,6 +1,6 @@
 # Dashboard Analytics: Definitions and Interpretation
 
-The Overview page provides a compact set of role-focused charts and three shortcuts for the current user's main work. **Advanced Analytics** contains the full ten-chart library. When this instance has no saved scans, the charts use clearly labeled illustrative demo records so the layout can be previewed; demo values are never represented as stored scan data.
+The Overview page provides a compact set of role-focused charts and three shortcuts for the current user's main work. **Advanced Analytics** contains the full ten-chart library. When there are no saved scans, the analytics area shows an empty state. Charts render only from persisted scan records.
 
 | Chart | Input | Interpretation / limitation |
 |---|---|---|

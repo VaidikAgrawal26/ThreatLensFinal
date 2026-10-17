@@ -14,3 +14,4 @@ yara-python>=4.5
 pytest>=8.0
 
 email-validator>=2.0.0
+httpx2  # Required by the configured Starlette TestClient for backend tests

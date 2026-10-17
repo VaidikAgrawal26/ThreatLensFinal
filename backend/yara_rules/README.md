@@ -1,1 +1,1 @@
-The demo rule can false-positive on legitimate software. Use trusted, reviewed rules; a YARA match is evidence, not proof.
+No production YARA rules are bundled. Install trusted, reviewed, licensed rules here or through the Administrator → Rule Updates workflow. A YARA match is evidence, not proof; no match is not proof of safety.

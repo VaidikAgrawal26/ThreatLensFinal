@@ -216,21 +216,4 @@ def analyze_file(filename, data):
     risk=min(100,sum(components.values()))
     severity="critical" if risk>=80 else "high" if risk>=60 else "medium" if risk>=30 else "low"
     verdict="malicious_suspected" if risk>=60 else "suspicious" if risk>=30 else "no_strong_indicators"
-    demo_evidence = {
-        "mode": "display_only_simulation",
-        "title": "Simulated threat indicators for UI demonstration",
-        "notice": "The following strings are synthetic demonstration content. They were NOT extracted from the uploaded file, are NOT YARA matches, do NOT affect the risk score, and were never executed.",
-        "indicators": [
-            {"name": "Encoded-command marker", "value": "powershell.exe -EncodedCommand <REDACTED-DEMO>", "severity": "high"},
-            {"name": "Persistence-like registry path", "value": r"HKCU\Software\DemoVendor\RunOnce", "severity": "medium"},
-            {"name": "Network indicator placeholder", "value": "https://example.invalid/demo-beacon", "severity": "medium"},
-        ],
-        "code_preview": "\n".join([
-            "// THREATLENS DISPLAY-ONLY DEMO — NOT EXECUTABLE",
-            "// Simulated indicator: encoded command argument detected",
-            "// Simulated behavior label: persistence-like registry reference",
-            "// Simulated network marker: https://example.invalid/demo-beacon",
-            "// No payload, persistence action, network request, or system change is performed.",
-        ])
-    }
-    return {"filename":Path(filename).name,"sha256":sha,"md5":md5,"file_size":len(data),"file_type":mimetypes.guess_type(filename)[0] or ("windows-pe" if pe["is_pe"] else "unknown"),"verdict":verdict,"severity":severity,"risk_score":float(risk),"risk_components":components,"risk_method":"Capped additive static-triage heuristic; evidence can be correlated and score is not a calibrated probability","features":features,"ml_prediction":ml,"yara_matches":ym,"yara_error":yerr,"yara_summary":ysummary,"pe_analysis":pe,"indicators":{"urls":urls,"ips":sorted(ips)[:100],"strings":strings},"demo_evidence":demo_evidence,"reasons":reasons,"disclaimer":"Static triage only. Low risk does not prove safety; a heuristic or YARA match is not proof of malware."}
+    return {"filename":Path(filename).name,"sha256":sha,"md5":md5,"file_size":len(data),"file_type":mimetypes.guess_type(filename)[0] or ("windows-pe" if pe["is_pe"] else "unknown"),"verdict":verdict,"severity":severity,"risk_score":float(risk),"risk_components":components,"risk_method":"Capped additive static-triage heuristic; evidence can be correlated and score is not a calibrated probability","features":features,"ml_prediction":ml,"yara_matches":ym,"yara_error":yerr,"yara_summary":ysummary,"pe_analysis":pe,"indicators":{"urls":urls,"ips":sorted(ips)[:100],"strings":strings},"reasons":reasons,"disclaimer":"Static triage only. Low risk does not prove safety; a heuristic or YARA match is not proof of malware."}

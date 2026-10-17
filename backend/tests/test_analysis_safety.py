@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 from app.services import ml_service
 from app.services.static_analyzer import analyze_file, entropy, yara_scan
+from app.core.config import settings
 
 
 def test_entropy_empty_and_constant():
@@ -76,21 +77,25 @@ def test_risk_components_are_reported_and_capped():
     assert 'not a calibrated probability' in result['risk_method']
 
 
-def test_demo_yara_positive_fixture_when_engine_installed():
+def test_yara_positive_fixture_when_engine_installed(monkeypatch):
     try:
         import yara  # noqa: F401
     except ImportError:
         pytest.skip('yara-python is not installed in this test environment')
-    fixture = Path(__file__).parent / 'fixtures' / 'yara_positive.bin'
+    fixture_dir = Path(__file__).parent / 'fixtures'
+    monkeypatch.setattr(settings, 'yara_rules_dir', str(fixture_dir / 'rules'))
+    fixture = fixture_dir / 'yara_positive.bin'
     result = analyze_file(fixture.name, fixture.read_bytes())
-    assert any(m['rule'] == 'ThreatLens_Demo_Suspicious_API_Strings' for m in result['yara_matches'])
+    assert any(m['rule'] == 'ThreatLens_Test_Suspicious_API_Strings' for m in result['yara_matches'])
 
 
-def test_demo_yara_negative_fixture_when_engine_installed():
+def test_yara_negative_fixture_when_engine_installed(monkeypatch):
     try:
         import yara  # noqa: F401
     except ImportError:
         pytest.skip('yara-python is not installed in this test environment')
-    fixture = Path(__file__).parent / 'fixtures' / 'yara_negative.bin'
+    fixture_dir = Path(__file__).parent / 'fixtures'
+    monkeypatch.setattr(settings, 'yara_rules_dir', str(fixture_dir / 'rules'))
+    fixture = fixture_dir / 'yara_negative.bin'
     result = analyze_file(fixture.name, fixture.read_bytes())
-    assert not any(m['rule'] == 'ThreatLens_Demo_Suspicious_API_Strings' for m in result['yara_matches'])
+    assert not any(m['rule'] == 'ThreatLens_Test_Suspicious_API_Strings' for m in result['yara_matches'])

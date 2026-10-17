@@ -1,9 +1,8 @@
-rule ThreatLens_Demo_Suspicious_API_Strings
+rule ThreatLens_Test_Suspicious_API_Strings
 {
     meta:
-        description = "Illustrative rule only; generic API strings are not proof of malware"
+        description = "Test-only harmless string matching fixture; not a production detection rule"
         severity = "low"
-        confidence = "low"
     strings:
         $a = "VirtualAlloc" ascii
         $b = "WriteProcessMemory" ascii

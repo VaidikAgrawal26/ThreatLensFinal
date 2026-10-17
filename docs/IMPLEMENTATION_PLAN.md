@@ -127,4 +127,4 @@ The role feature center should count the following ten workflow outcomes for eac
 
 ## Current boundaries
 
-The supplied demo YARA rule is illustrative. The final configured model is the user-supplied Random Forest with a 72-feature schema. Its fitted imputers allow PE uploads to receive partial static estimates despite unavailable runtime telemetry; the app marks coverage and imputation explicitly. Its 99.10% random-split result is not a live accuracy guarantee and requires independent holdout validation. See [Model Validation Review](MODEL_VALIDATION_REVIEW.md).
+The production YARA rules directory is empty by default; only reviewed rules installed by an administrator are evaluated. The final configured model is the user-supplied Random Forest with a 72-feature schema. Its fitted imputers allow PE uploads to receive partial static estimates despite unavailable runtime telemetry; the app marks coverage and imputation explicitly. Its 99.10% random-split result is not a live accuracy guarantee and requires independent holdout validation. See [Model Validation Review](MODEL_VALIDATION_REVIEW.md).

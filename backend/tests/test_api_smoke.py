@@ -177,14 +177,14 @@ def test_model_inference_uses_saved_imputers_for_missing_runtime_telemetry(monke
     assert set(result['runtime_features_missing'])==runtime
     assert 'imputed' in result['detail']
 
-def test_scan_result_contains_explicit_demo_only_evidence(client, auth_headers):
+def test_scan_result_contains_only_file_derived_indicators(client, auth_headers):
     response = client.post('/api/scans/upload', headers=auth_headers, files={'file': ('demo.bin', b'harmless synthetic test fixture', 'application/octet-stream')})
     assert response.status_code == 200, response.text
-    demo = response.json().get('demo_evidence')
-    assert demo and demo['mode'] == 'display_only_simulation'
-    assert 'NOT extracted' in demo['notice']
-    assert 'NOT EXECUTABLE' in demo['code_preview']
-    assert 'example.invalid' in demo['code_preview']
+    result = response.json()
+    assert 'demo_evidence' not in result
+    assert 'harmless synthetic test fixture' in result['indicators']['strings']
+    assert result['indicators']['urls'] == []
+    assert result['indicators']['ips'] == []
 
 
 def test_soc_member_cannot_upload_samples(client):
