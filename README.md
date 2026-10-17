@@ -16,34 +16,40 @@ ThreatLens AI is a local web application for static file triage. It computes has
    Copy-Item .env.example .env
    ```
 3. Edit `backend/.env` before first startup. Set `JWT_SECRET` to a long, unique random value. To create the first administrator, set `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD` to your own values. The admin is created only if the email is not already in the database. Remove the bootstrap password from the environment after account creation.
-4. Start the API from `backend`:
+4. Create/update the local database schema from `backend`:
    ```powershell
-   python -m uvicorn app.main:app --host 127.0.0.1 --port 8001
+   alembic upgrade head
    ```
-5. In a second PowerShell terminal, from `frontend`:
+5. Start the API from `backend`:
+   ```powershell
+      python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+   ```
+6. In a second PowerShell terminal, from `frontend`:
    ```powershell
    npm install
    npm run dev
    ```
-6. Open the URL printed by Vite. Default API: `http://127.0.0.1:8001`; API docs: `http://127.0.0.1:8001/docs`.
+7. Open the URL printed by Vite. Default API: `http://127.0.0.1:8000`; API docs: `http://127.0.0.1:8000/docs`.
 
 If Vite chooses a port other than 5173/5174, add the exact origin to `CORS_ORIGINS` in `backend/.env` and restart the backend. The frontend API URL can be overridden in `frontend/.env.local` using `VITE_API_URL`.
 
 ## Docker option
 
-Copy `backend/.env.example` to `backend/.env`, set a unique `JWT_SECRET`, and configure the first administrator credentials. Then run `docker compose up --build` from the project root. The compose setup uses port 8000 for the API and 5173 for the frontend; confirm that those ports are free.
+Copy `.env.example` to `.env` for local Docker use, then run `docker compose up --build` from the project root. This starts PostgreSQL, the API on port 8000, and the frontend on port 5173. The example values are development-only. For deployment, create a private environment file with a unique JWT secret, strong database/admin passwords, domain and explicit origins, then use `docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile production --env-file .env.production up --build`. The production overlay keeps database/API ports private and uses Caddy for HTTPS. Configure DNS and allow inbound ports 80/443 at the host firewall.
+
+For a manually managed Render demo deployment, start with [the Render deployment guide](docs/RENDER_DEPLOYMENT.md) and the root [render.yaml](render.yaml) Blueprint. The Blueprint uses a temporary free Postgres plan for demonstration; select a persistent paid database plan if scan history must last beyond the free database's expiration window.
 
 ## Authentication and roles
 - Signup displays all four roles: Administrator, Security Analyst, SOC Team Member, and Researcher. The role is stored server-side and the login selection must match the saved role.
 - Researcher signups activate immediately; Administrator, Security Analyst, and SOC Team Member signups remain pending until an administrator activates them. Bootstrap the first administrator using the environment variables above.
 - Only administrators can change roles/status, view audit events, manage accounts, and add/remove local YARA rule files.
 - File uploads are allowed for Administrator, Security Analyst, and Researcher roles. SOC Team Members can monitor scan history, alerts and incidents but cannot upload files. Scan, history, analytics, YARA inventory and model-readiness APIs require a signed bearer token.
-- This is still a prototype: configure HTTPS, rate limiting, strong secrets, retention policies, protected backups and external audit-log storage before deployment.
+- Production mode fails closed on the development JWT secret and SQLite. Use PostgreSQL migrations, strong secrets, HTTPS, retention policies, protected backups, rate limiting at the edge, and separately controlled audit-log storage before handling operational samples.
 
 ## ML artifact
-Copy your trusted, actual training output to `backend/ml/artifacts/malware_classifier.pkl` and the matching `feature_schema.json` beside it. Do not rename another model to this name. The schema reader supports the training notebook's `feature_columns_in_input_order` field and common alternatives. PE header/section/import features are extracted when `pefile` is installed. Runtime-only features are not invented; incompatible models are marked unavailable. See [ML Model Integration](docs/ML_MODEL_INTEGRATION.md).
+The active model is the user-supplied Random Forest at `backend/ml/artifacts/candidates/user_supplied_random_forest_2026-10-16/`, paired with its 72-column `feature_schema.json`, metrics, report and feature-importance file. PE header/section/import features are extracted when `pefile` is installed. The model pipeline's fitted imputers fill missing inputs; scans explicitly mark partial coverage and missing runtime fields. See [ML Model Integration](docs/ML_MODEL_INTEGRATION.md).
 
-The supplied model artifact and matching schema are included. Live inference still depends on installing the pinned requirements (including scikit-learn 1.9.x), compatible artifact loading, and the uploaded file containing extractable required static features. Runtime telemetry is not fabricated.
+The active Random Forest requires the pinned scikit-learn 1.9.1 runtime. It produces a static-file estimate by using its fitted median/mode imputers for missing telemetry; the app labels these predictions as partial and displays input coverage. This adaptation makes the existing model callable for PE uploads, but its 99.10% reported holdout metrics do not establish live-upload accuracy.
 
 ## YARA rules
 Only `backend/yara_rules/threatlens_demo.yar` is bundled by default. It is an illustrative test rule, not a maintained production ruleset. The Administrator → Rule Updates page allows reviewed local `.yar`/`.yara` files to be compiled and added or removed. No upstream ruleset is auto-downloaded. Verify source, version, license and performance before operational use. See [YARA Library and Mapping](docs/YARA_LIBRARY_AND_MAPPING.md).
@@ -63,6 +69,9 @@ The frontend JSX was syntax-transpiled with TypeScript in the packaging environm
 - [Dashboard Analytics](docs/DASHBOARD_ANALYTICS.md)
 - [Testing Guide](docs/TESTING.md)
 - [Role Functionality Inventory](docs/ROLE_FUNCTIONALITY_AND_ANALYTICS.md)
+- [Implementation Plan and Role Acceptance Matrix](docs/IMPLEMENTATION_PLAN.md)
+- [Role Feature Acceptance Matrix](docs/ROLE_FEATURE_ACCEPTANCE_MATRIX.md)
+- [Model Validation Review](docs/MODEL_VALIDATION_REVIEW.md)
 - [YARA Library and Mapping](docs/YARA_LIBRARY_AND_MAPPING.md)
 - [Verification Report](docs/VERIFICATION_REPORT.md)
 
@@ -77,7 +86,7 @@ The login and registration forms display all four workspace roles: Administrator
 
 ## Model artifact integration
 
-The supplied `malware_classifier.pkl`, `feature_schema.json`, `threatlens_pe_random_forest.joblib`, and evaluation CSV/JSON/text artifacts are placed under `backend/ml/artifacts`. The active model path defaults to `ml/artifacts/malware_classifier.pkl`. Inference is deliberately skipped if the extractor does not provide every required feature or the model/schema/runtime checks fail. The schema includes runtime telemetry fields that a static file upload cannot truthfully derive, so do not interpret an unavailable ML result as a benign verdict.
+The active model path defaults to `ml/artifacts/candidates/user_supplied_random_forest_2026-10-16/threatlens_pe_random_forest.joblib`, with its paired schema in the same directory. Valid PE uploads receive a Random Forest estimate when core static fields are extractable; the saved pipeline imputes fields the static scanner cannot observe and each result reports coverage and missing runtime inputs. Treat partial estimates as triage signals, not observed behavior, proof of malware, or proof of safety.
 
 
 ## Demo scan evidence and charts
