@@ -1,0 +1,66 @@
+services:
+  - type: web
+    name: threatlens-demo-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /ready
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PORT
+        value: "10000"
+      - key: WEB_CONCURRENCY
+        value: "1"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: threatlens-demo-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://threatlens-demo-ui.onrender.com
+      - key: TRUSTED_HOSTS
+        fromService:
+          type: web
+          name: threatlens-demo-api
+          envVarKey: RENDER_EXTERNAL_HOSTNAME
+      - key: BOOTSTRAP_ADMIN_EMAIL
+        sync: false
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+      - key: MODEL_PATH
+        value: ml/artifacts/candidates/user_supplied_random_forest_2026-10-16/threatlens_pe_random_forest.joblib
+      - key: FEATURE_SCHEMA_PATH
+        value: ml/artifacts/candidates/user_supplied_random_forest_2026-10-16/feature_schema.json
+      - key: YARA_RULES_DIR
+        value: yara_rules
+      - key: MAX_UPLOAD_MB
+        value: "25"
+      - key: PUBLIC_API_URL
+        fromService:
+          type: web
+          name: threatlens-demo-api
+          envVarKey: RENDER_EXTERNAL_URL
+
+  - type: web
+    name: threatlens-demo-ui
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: threatlens-demo-api
+          envVarKey: PUBLIC_API_URL
+
+databases:
+  - name: threatlens-demo-db
+    databaseName: threatlens
+    user: threatlens
+    plan: free
+    postgresMajorVersion: "16"
+

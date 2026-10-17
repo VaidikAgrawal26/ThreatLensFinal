@@ -27,9 +27,9 @@ Protected scan, analytics, YARA inventory and model-readiness endpoints require 
 2. From the project root, run `py -3.11 -m venv .venv` and `\.venv\Scripts\Activate.ps1`.
 3. Install backend dependencies: `cd backend; python -m pip install -r requirements.txt`.
 4. Copy `.env.example` to `.env`. Set a unique random `JWT_SECRET`. To bootstrap the first admin, set `BOOTSTRAP_ADMIN_EMAIL` and a strong `BOOTSTRAP_ADMIN_PASSWORD` before first startup. These values are used only to create an admin if that email does not already exist; remove the bootstrap password from the environment after creation.
-5. Start the API from `backend`: `python -m uvicorn app.main:app --host 127.0.0.1 --port 8001`.
+5. From `backend`, apply the schema with `alembic upgrade head`, then start the API: `python -m uvicorn app.main:app --host 127.0.0.1 --port 8000`.
 6. In a second terminal, run `cd frontend`, `npm install`, and `npm run dev`.
-7. Open the Vite URL printed in the terminal. The frontend defaults to API `http://127.0.0.1:8001`.
+7. Open the Vite URL printed in the terminal. The frontend defaults to API `http://127.0.0.1:8000`.
 8. Verify `/health` and `/docs`. CORS allows localhost/127.0.0.1 on ports 5173 and 5174 by default; update `CORS_ORIGINS` for a different port.
 
 PowerShell commands should be run in separate terminals for backend and frontend. For Docker, inspect and configure `docker-compose.yml` and the environment before exposing services. Do not use development secrets in deployment.
@@ -38,7 +38,7 @@ PowerShell commands should be run in separate terminals for backend and frontend
 Set `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD` in `backend/.env` before first start. Sign in through the UI. New self-registered users receive only the Researcher role. In the Administrator workspace, assign `administrator`, `soc_member`, `security_analyst`, or `researcher` as appropriate. Passwords are hashed with PBKDF2-HMAC-SHA256; bearer tokens are signed and expire. Use HTTPS, a high-entropy secret, rate limiting and a reviewed deployment configuration before network exposure.
 
 ## 5. Model integration
-Place the exact trained scikit-learn pipeline at `backend/ml/artifacts/malware_classifier.pkl` and the `feature_schema.json` generated in the same training run next to it. The schema reader supports `feature_names`, `feature_columns_in_input_order`, `feature_columns`, `features`, or `columns`. For PE samples, the analyzer extracts the known static PE header/section/import fields. Behavioral fields such as registry reads, process events or network telemetry are not fabricated; if the selected model requires them, prediction is marked unavailable with missing feature names. Check `/api/model/readiness` after login. A successful readiness check does not establish predictive quality.
+The active Random Forest and its paired schema default to `backend/ml/artifacts/candidates/user_supplied_random_forest_2026-10-16/`. For supported PE files the analyzer extracts static header/section/import fields; pipeline imputers fill unavailable inputs and each estimate displays coverage and missing runtime fields. Check `/api/model/readiness` after login. A successful readiness check does not establish predictive quality.
 
 ## 6. YARA operations
 The bundled `threatlens_demo.yar` is an illustrative integration fixture, not a production signature set. In the Administrator → Rule Updates workflow, upload a reviewed `.yar`/`.yara` file; it is compiled before it is written. Remove local rules through the same page. Files are not automatically downloaded from upstream repositories. Record provenance, source commit/version and license alongside the rules. The rule inventory reports compilation errors and rule metadata where the installed engine exposes it.

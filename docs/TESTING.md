@@ -12,7 +12,7 @@ Tests cover health, auth/registration policy, protected endpoints, upload/histor
 1. Copy `backend/.env.example` to `backend/.env`.
 2. Set a unique high-entropy `JWT_SECRET`.
 3. Set `BOOTSTRAP_ADMIN_EMAIL` and a unique `BOOTSTRAP_ADMIN_PASSWORD` for first startup only, then remove the password from the environment.
-4. Run the backend from `backend`: `python -m uvicorn app.main:app --host 127.0.0.1 --port 8001`.
+4. From `backend`, apply the schema with `alembic upgrade head`, then run the API: `python -m uvicorn app.main:app --host 127.0.0.1 --port 8000`.
 5. Run the frontend from `frontend`: `npm install`, then `npm run dev`.
 6. Sign in as admin; register a second account and confirm it receives Researcher role. Assign its role from Administration and verify the backend denies unauthorized admin requests.
 
@@ -45,9 +45,9 @@ Tests cover health, auth/registration policy, protected endpoints, upload/histor
 6. Record source, license, version/commit, date and fixture hashes. The bundled demo rule is illustrative only.
 
 ## ML integration tests
-1. Place the actual trusted `malware_classifier.pkl` and its paired `feature_schema.json` in `backend/ml/artifacts/`.
-2. Authenticate and request `/api/model/readiness`.
-3. Confirm the schema feature count and order. If the model requires features not extractable from a static file, inference must remain unavailable and name missing fields.
+1. Confirm the configured Random Forest and paired schema exist under `backend/ml/artifacts/candidates/user_supplied_random_forest_2026-10-16/`.
+2. Use the pinned scikit-learn 1.9.1 environment, authenticate, and request `/api/model/readiness`.
+3. For valid PE uploads, confirm a model result includes observed/expected feature coverage and reports missing runtime fields as imputed rather than observed.
 4. Test on labeled held-out examples from the same feature contract. Review false positives and false negatives.
 5. Verify model and schema/library versions. Do not call a model score a calibrated probability unless calibration was evaluated.
 

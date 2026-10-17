@@ -137,7 +137,16 @@ def extract_pe_model_features(data):
         if hasattr(dos, source): out[target] = int(getattr(dos, source))
     out["file_extension"] = "pe"
     out["MachineType"] = int(fh.Machine)
-    out["PEType"] = "PE32+" if int(getattr(oh, "Magic", 0)) == 0x20B else "PE32" if int(getattr(oh, "Magic", 0)) == 0x10B else "unknown"
+    pe_magic=int(getattr(oh, "Magic", 0))
+    out["PEType"] = "PE32+" if pe_magic == 0x20B else "PE32" if pe_magic == 0x10B else f"Unknown (0x{pe_magic:x})"
+    entry_rva=int(getattr(oh, "AddressOfEntryPoint", 0))
+    try:
+        entry_section=pe.get_section_by_rva(entry_rva)
+        section_label=entry_section.Name.rstrip(b"\x00").decode("ascii","replace") if entry_section else "?"
+    except Exception:
+        section_label="?"
+    # The fitted categorical encoder was trained on this annotated RVA string form.
+    out["AddressOfEntryPoint"]=f"0x{entry_rva:016x} (Section: {section_label})"
     out["OperatingSystemVersion"] = f"{int(getattr(oh, 'MajorOperatingSystemVersion', 0))}.{int(getattr(oh, 'MinorOperatingSystemVersion', 0))}"
     out["ImageVersion"] = f"{int(getattr(oh, 'MajorImageVersion', 0))}.{int(getattr(oh, 'MinorImageVersion', 0))}"
     # Preserve the exact casing used by feature_schema.json.
@@ -197,8 +206,13 @@ def analyze_file(filename, data):
         yara_points += 10 if sev in {"critical","high"} else 6 if sev=="medium" else 3
         reasons.append("YARA rule matched: "+str(match.get("rule","unknown")))
     components["yara_evidence"]=min(30,yara_points)
+    if ml.get("available") and (ml.get("input_coverage") or {}).get("partial"):
+        cov=ml["input_coverage"]
+        reasons.append(f"Random Forest used partial static inputs ({cov.get('observed',0)}/{cov.get('expected',72)} observed); missing fields were filled by training-time imputers")
     if ml.get("available") and str(ml.get("label","" )).lower()=="malware":
-        components["ml_evidence"]=15; reasons.append("ML classifier predicted Malware (model score is not necessarily calibrated)")
+        partial=bool((ml.get("input_coverage") or {}).get("partial"))
+        components["ml_evidence"]=8 if partial else 15
+        reasons.append("Random Forest predicted Malware (partial-input ML evidence is down-weighted; score is not calibrated or proof of malware)" if partial else "Random Forest predicted Malware (score is not calibrated and is not proof of malware)")
     risk=min(100,sum(components.values()))
     severity="critical" if risk>=80 else "high" if risk>=60 else "medium" if risk>=30 else "low"
     verdict="malicious_suspected" if risk>=60 else "suspicious" if risk>=30 else "no_strong_indicators"

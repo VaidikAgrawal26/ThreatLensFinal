@@ -1,26 +1,63 @@
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: threatlens
+      POSTGRES_USER: threatlens
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-localdevpass}
+    volumes:
+      - threatlens_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U threatlens -d threatlens"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
   backend:
     build: ./backend
-    env_file:
-      - ./backend/.env
-    container_name: threatlens-backend
     environment:
-      DATABASE_URL: sqlite:///./data/threatlens.db
-      CORS_ORIGINS: http://localhost:5173
-      MAX_UPLOAD_MB: 25
-      MODEL_PATH: ml/artifacts/malware_classifier.pkl
-      FEATURE_SCHEMA_PATH: ml/artifacts/feature_schema.json
-    ports: ["8000:8000"]
+      APP_NAME: ThreatLens AI
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://threatlens:localdevpass@db:5432/threatlens}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      TRUSTED_HOSTS: ${TRUSTED_HOSTS:-localhost,127.0.0.1,backend}
+      JWT_SECRET: ${JWT_SECRET:-development-only-change-this-secret-before-deploying}
+      ACCESS_TOKEN_MINUTES: ${ACCESS_TOKEN_MINUTES:-30}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}
+      MODEL_PATH: ${MODEL_PATH:-ml/artifacts/candidates/user_supplied_random_forest_2026-10-16/threatlens_pe_random_forest.joblib}
+      FEATURE_SCHEMA_PATH: ${FEATURE_SCHEMA_PATH:-ml/artifacts/candidates/user_supplied_random_forest_2026-10-16/feature_schema.json}
+      YARA_RULES_DIR: yara_rules
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
+    depends_on:
+      db:
+        condition: service_healthy
     volumes:
-      - threatlens_data:/app/data
+      - threatlens_rules:/app/yara_rules
       - ./backend/ml/artifacts:/app/ml/artifacts:ro
-      - ./backend/yara_rules:/app/yara_rules:ro
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
   frontend:
-    build: ./frontend
-    container_name: threatlens-frontend
-    depends_on: [backend]
-    ports: ["5173:5173"]
-    environment:
-      VITE_API_URL: http://localhost:8000
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "5173:8080"
+    restart: unless-stopped
+
 volumes:
-  threatlens_data:
+  threatlens_postgres:
+  threatlens_rules:

@@ -4,6 +4,9 @@ import hashlib, json, re, zipfile, io
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from app.core.config import settings
 from app.core.security import get_current_user, require_roles
+from app.db import get_db
+from app.models import AuditLog, User
+from sqlalchemy.orm import Session
 
 router=APIRouter(prefix="/api/yara",tags=["YARA"],dependencies=[Depends(get_current_user)])
 def _root():
@@ -30,7 +33,7 @@ def rules():
     total=sum(r["rule_count"] or 0 for r in results if r["compile_status"]=="ok")
     return {"count":len(files),"total_rules":total,"rules":results,"engine":"yara-python","source_policy":"Local files only. Each file should carry its upstream source, version and license in metadata/adjacent manifest; these are not guessed by the API.","note":"This endpoint does not download an upstream ruleset automatically."}
 @router.post("/rules")
-async def add_rule(file:UploadFile=File(...),_=Depends(require_roles("administrator"))):
+async def add_rule(file:UploadFile=File(...),db:Session=Depends(get_db),actor:User=Depends(require_roles("administrator"))):
     name=Path(file.filename or "").name
     if Path(name).suffix.lower() not in {".yar",".yara"}: raise HTTPException(415,"Only .yar or .yara rule files are accepted")
     if not name or name in {".",".."}: raise HTTPException(400,"Invalid filename")
@@ -48,10 +51,11 @@ async def add_rule(file:UploadFile=File(...),_=Depends(require_roles("administra
     if target.parent!=root: raise HTTPException(400,"Invalid rule path")
     if target.exists(): raise HTTPException(409,"A rule file with that name already exists; remove or rename it first")
     target.write_text(text,encoding="utf-8")
+    db.add(AuditLog(user_id=actor.id,actor_email=actor.email,action="yara.rule_added",target=name,details={"bytes":len(data),"sha256":hashlib.sha256(data).hexdigest()}));db.commit()
     return {"message":"Rule compiled and added. Review source/version/license before operational use.","filename":name,"bytes":len(data)}
 
 @router.post("/ruleset")
-async def import_ruleset(file:UploadFile=File(...),source:str=Form(...),version:str=Form(...),license_name:str=Form(...),_=Depends(require_roles("administrator"))):
+async def import_ruleset(file:UploadFile=File(...),source:str=Form(...),version:str=Form(...),license_name:str=Form(...),db:Session=Depends(get_db),actor:User=Depends(require_roles("administrator"))):
     """Import a reviewed community/vendor rule ZIP; validate all rules before writing any."""
     if not (file.filename or "").lower().endswith(".zip"): raise HTTPException(415,"Upload a ZIP archive containing .yar/.yara files")
     if not source.strip() or not version.strip() or not license_name.strip(): raise HTTPException(422,"Source, version/revision and license are required")
@@ -97,6 +101,7 @@ async def import_ruleset(file:UploadFile=File(...),source:str=Form(...),version:
         (target/"manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
     except Exception:
         import shutil;shutil.rmtree(target,ignore_errors=True);raise HTTPException(500,"Ruleset import failed; partial files were removed")
+    db.add(AuditLog(user_id=actor.id,actor_email=actor.email,action="yara.ruleset_imported",target=slug,details={"version":rev,"license":license_name.strip(),"file_count":len(installed),"rule_count":sum(x["rule_count"] for x in installed)}));db.commit()
     return {"message":"Ruleset validated and imported","directory":str(target.relative_to(root)).replace("\\","/"),"source":manifest["source"],"version":manifest["version"],"license":manifest["license"],"file_count":len(installed),"rule_count":sum(x["rule_count"] for x in installed),"manifest":manifest}
 
 @router.get("/rulesets")
@@ -108,11 +113,12 @@ def rulesets():
     return {"count":len(out),"rulesets":out}
 
 @router.delete("/rules/{filename:path}")
-def delete_rule(filename:str,_=Depends(require_roles("administrator"))):
+def delete_rule(filename:str,db:Session=Depends(get_db),actor:User=Depends(require_roles("administrator"))):
     if Path(filename).suffix.lower() not in {".yar",".yara"} or ".." in Path(filename).parts: raise HTTPException(400,"Invalid rule filename")
     root=_root(); target=(root/filename).resolve()
     if root not in target.parents: raise HTTPException(400,"Invalid rule path")
     if not target.is_file(): raise HTTPException(404,"Rule file not found")
     if target.name=="threatlens_demo.yar": raise HTTPException(400,"The bundled demo rule is protected from deletion")
     target.unlink()
+    db.add(AuditLog(user_id=actor.id,actor_email=actor.email,action="yara.rule_removed",target=filename,details={}));db.commit()
     return {"message":"Rule file removed from local ruleset","filename":filename}

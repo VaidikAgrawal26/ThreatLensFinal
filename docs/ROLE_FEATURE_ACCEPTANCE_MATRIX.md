@@ -1,65 +1,84 @@
-# Role Feature Acceptance Matrix — additive integration
+# Role feature acceptance matrix
 
-This addition preserves the existing pages and APIs and adds **Role Feature Center** to each authenticated workspace. The center gives direct navigation to ten role-specific capabilities and lists the ten chart types already available in Overview / Advanced Analytics.
+## Counting rule
 
-## Administrator — 10 capabilities
-1. User and role management — `Administration`
-2. Platform health — `System Health`
-3. YARA library management — `YARA Library`
-4. Ruleset imports and updates — `Rule Updates`
-5. Model artifact readiness — `Model Readiness`
-6. Global scan monitoring — `Scan History`
-7. Audit event review — `Audit Review`
-8. Platform analytics — `Advanced Analytics`
-9. Threat notifications — `Notifications`
-10. Static evidence inspection — `Live Scan`
+The ten capabilities below are distinct role outcomes. Shared platform features such as sign-in, navigation and profile management are foundations, not capabilities counted for each role. Shared stored scan records may supply evidence to several roles, but each role acts on that evidence for a different use case. Server-side permissions remain authoritative.
 
-## SOC Team Member — 10 capabilities
-1. Threat overview — `Overview`
-2. Live alert triage — `Alert Triage`
-3. Incident queue, assignment and status — `Incident Queue`
-4. Scan activity — `Scan History`
-5. Threat timeline — `Threat Timeline`
-6. Response checklist — `Response Playbooks`
-7. Shift handover — `Shift Handover`
-8. Operational analytics — `Advanced Analytics`
-9. Notifications — `Notifications`
-10. Evidence detail — `Live Scan`
+## Administrator - platform governance
 
-## Security Analyst — 10 capabilities
-1. Static file scanner — `Live Scan`
-2. Hash and metadata review — `File Indicators`
-3. YARA match explorer — `Rule Match Explorer`
-4. Rule explanations and library references — `YARA Library`
-5. ML assessment availability/output — `ML Explanation`
-6. Evidence comparison — `Evidence Comparison`
-7. Risk component review — scan detail in `Live Scan`
-8. Investigation reporting — `Investigation Report`
-9. Historical comparison — `Scan History`
-10. Investigation analytics — `Advanced Analytics`
+| # | Capability | Main implementation |
+|---:|---|---|
+| 1 | Govern account creation, roles and status | `Administration`; `/api/admin/users` endpoints |
+| 2 | Check API/service health | `System Health`; `GET /health` |
+| 3 | Inspect installed YARA files and compile state | `YARA Library`; `GET /api/yara/rules` |
+| 4 | Import a versioned ruleset after validation | `Rule Updates`; `POST /api/yara/ruleset` |
+| 5 | Review model/schema release readiness and saved evaluation provenance | `Model Readiness`; `/api/model/readiness`, `/api/model/evaluation` |
+| 6 | Monitor platform-wide scan records | `Scan History`; scan APIs |
+| 7 | Search the security audit trail | `Audit Review`; `GET /api/admin/audit` |
+| 8 | Review platform scan analytics | `Advanced Analytics`; analytics APIs |
+| 9 | Review notification-threshold impact | `Notifications`; threshold-qualified stored scan records |
+| 10 | Review account, scan and audit governance totals | Governance coverage summary; `GET /api/admin/overview` |
 
-## Researcher — 10 capabilities
-1. Sample record explorer and label annotations — `Dataset Explorer`
-2. Category/family research notes — `Family Research`
-3. Model-vs-YARA comparison — `Evidence Comparison`
-4. Feature distribution — `Feature Distribution`
-5. False-positive review support — `Dataset Explorer`
-6. False-negative review support — `Dataset Explorer`
-7. Detection trend analysis — `Advanced Analytics`
-8. ML output/availability review — `ML Explanation`
-9. Research export — `Export Research`
-10. Reproducibility notes — `Experiment Notes`
+## SOC Team Member - operational response
 
-## Ten chart types
-1. Line trend
-2. Bar comparison
-3. Donut composition
-4. Weekday/hour heatmap
-5. Scatter relationship
-6. Stacked bar over time
-7. Triage funnel
-8. Histogram
-9. Radar profile
-10. Treemap
+| # | Capability | Main implementation |
+|---:|---|---|
+| 1 | Review operational threat posture for the shift | SOC posture; severity/risk summaries |
+| 2 | Create, assign and update an incident | `Incident Queue`; `/api/incidents` |
+| 3 | Prioritize alerts by severity/risk | `Alert Triage`; stored scan records |
+| 4 | Search scan activity by file/hash/severity | Activity search; stored scan records |
+| 5 | Inspect the time-ordered threat timeline | `Threat Timeline`; stored scan timestamps |
+| 6 | Work an evidence-handling response checklist | `Response Playbooks`; local checklist state |
+| 7 | Export evidence for shift handover | `Shift Handover`; JSON/CSV export |
+| 8 | Review SOC queue and workload metrics | SOC analytics workspace; loaded scan records |
+| 9 | Review the responder notification queue | `Notifications`; threshold-qualified stored records |
+| 10 | Group duplicate records by exact SHA-256 | SOC duplicate grouper; loaded scan records |
 
-Charts use the loaded scan records. The role feature center is an additive navigation/acceptance view, not a claim that every capability is equivalent to an enterprise-grade SIEM/ITSM module. For example, response playbook checklist state is browser-local, family attribution is not automatically asserted, and classification accuracy is not calculated from unlabeled scans. Runtime telemetry, comprehensive maintained YARA signatures and model compatibility still depend on environment/configuration described in `VERIFICATION_REPORT.md`.
+## Security Analyst - file investigation
+
+| # | Capability | Main implementation |
+|---:|---|---|
+| 1 | Submit an authorized sample for static analysis | `Live Scan`; `POST /api/scans/upload` |
+| 2 | Locate a sample by hash or filename | `File Indicators`; stored scan records |
+| 3 | Inspect actual YARA match evidence | `Rule Match Explorer`; scan detail response |
+| 4 | Interpret YARA rule metadata and compilation context | YARA library and rule guide |
+| 5 | Audit per-scan model availability and output | `ML Explanation`; model readiness + scan records |
+| 6 | Compare static, YARA and ML signals side by side | `Evidence Comparison` |
+| 7 | Explain heuristic risk-score components | Scan detail risk breakdown |
+| 8 | Export a selected-scan investigation report | `Investigation Report` |
+| 9 | Diff two historical scan records | Analyst history comparison |
+| 10 | Filter stored indicators of compromise | IOC filter workspace |
+
+## Researcher - evaluation and reproducibility
+
+| # | Capability | Main implementation |
+|---:|---|---|
+| 1 | Browse samples/scan records stored in this instance | `Dataset Explorer` |
+| 2 | Record independently sourced benign/malware labels | `/api/research/annotations` |
+| 3 | Record family/category hypotheses with rationale | `Family Research`; research annotations |
+| 4 | Summarize measured feature distributions | `Feature Distribution` |
+| 5 | Curate suspected false-positive review candidates | False-positive review workspace |
+| 6 | Curate suspected false-negative review candidates | False-negative review workspace |
+| 7 | Explore scan-derived trends without claiming model accuracy | Research trend workspace; stored scan records |
+| 8 | Inspect training evaluation artifacts and consistency warnings | Model explainability/evaluation review; `/api/model/evaluation` |
+| 9 | Export scan records and reviewer annotations for offline research | Research export; research/analytics APIs |
+| 10 | Save per-user reproducibility notes | `Experiment Notes`; `/api/research/notes` |
+
+## Authorization acceptance
+
+- Login requires the selected workspace to match the account role stored in the database.
+- Researcher registration activates immediately; privileged role requests stay pending until an administrator activates them.
+- The SOC role cannot upload files. Administrator, Security Analyst and Researcher may submit scans under the current policy.
+- Account, role, status, audit and YARA mutation endpoints require an administrator token.
+- Incident endpoints require an administrator, Security Analyst or SOC token.
+- Research annotations and notes require a researcher, analyst or administrator token. Notes are returned only for their owner.
+- Model readiness/evaluation, scan, history, analytics and YARA inventory APIs require authentication.
+
+## Limitations to keep visible
+
+- A shared API or scan record does not imply that every role has the same action permissions.
+- The response playbook checklist is browser-local; it is not a persisted incident.
+- Model metrics are saved training artifacts and not accuracy on live uploaded files.
+- The supplied model needs runtime fields absent from static file analysis; inference may be unavailable.
+- Research labels are reviewer inputs, not automatically verified ground truth.
+- See [Implementation Plan](IMPLEMENTATION_PLAN.md) and [Model Validation Review](MODEL_VALIDATION_REVIEW.md) for release gates and unresolved training validation.

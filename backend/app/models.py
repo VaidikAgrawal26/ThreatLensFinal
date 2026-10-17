@@ -15,6 +15,18 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     last_login_at = Column(DateTime(timezone=True), nullable=True)
 
+class RevokedToken(Base):
+    __tablename__ = "revoked_tokens"
+    jti = Column(String(64), primary_key=True)
+    expires_at = Column(DateTime(timezone=True), nullable=False, index=True)
+    revoked_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+class LoginAttempt(Base):
+    __tablename__ = "login_attempts"
+    id = Column(Integer, primary_key=True)
+    email = Column(String(255), nullable=False, index=True)
+    attempted_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+
 class AuditLog(Base):
     __tablename__ = "audit_logs"
     id = Column(Integer, primary_key=True, index=True)
@@ -40,6 +52,7 @@ class Scan(Base):
     ml_score = Column(Float, nullable=True)
     yara_count = Column(Integer, default=0)
     result_json = Column(JSON, nullable=False)
+    uploaded_by = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
 
 

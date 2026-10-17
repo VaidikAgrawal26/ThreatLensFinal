@@ -133,17 +133,17 @@ def test_model_evaluation_endpoint_returns_saved_artifacts(client, auth_headers)
     payload = response.json()
     assert payload['source'] == 'saved training artifacts'
     assert payload['applies_to_live_scans'] is False
-    assert payload['metrics']['selected_model'] == 'LightGBM'
-    assert len(payload['model_comparison']) >= 1
-    assert '99.55%' in payload['artifact_consistency_note']
+    assert payload['metrics']['selected_model'] == 'Random Forest'
+    assert payload['model_comparison'] == []
+    assert 'not live scan accuracy' in payload['artifact_consistency_note']
 
 
 def test_supplied_model_artifacts_match_schema():
     import json
     from pathlib import Path
     from app.services import ml_service
-    schema_path = Path('ml/artifacts/feature_schema.json')
-    model_path = Path('ml/artifacts/malware_classifier.pkl')
+    schema_path = ml_service.SCHEMA_PATH
+    model_path = ml_service.MODEL_PATH
     assert schema_path.exists() and model_path.exists()
     schema = json.loads(schema_path.read_text(encoding='utf-8'))
     names = schema['feature_columns_in_input_order']

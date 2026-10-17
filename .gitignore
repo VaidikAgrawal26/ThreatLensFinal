@@ -1,6 +1,11 @@
+/.env
+/.venv/
 backend/.venv/
 backend/.env
 backend/data/
 frontend/node_modules/
 frontend/dist/
 __pycache__/
+*.py[cod]
+/.venv-ember/
+/data/ember2024_win32/

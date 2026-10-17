@@ -1,0 +1,45 @@
+services:
+  db:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the deployment environment}
+
+  backend:
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL for the private PostgreSQL service}
+      CORS_ORIGINS: https://${DOMAIN:?Set DOMAIN to the public HTTPS hostname}
+      TRUSTED_HOSTS: ${DOMAIN:?Set DOMAIN to the public HTTPS hostname}
+      JWT_SECRET: ${JWT_SECRET:?Set a unique random JWT_SECRET of at least 32 characters}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:?Set BOOTSTRAP_ADMIN_EMAIL}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:?Set BOOTSTRAP_ADMIN_PASSWORD}
+    ports: []
+
+  frontend:
+    build:
+      args:
+        VITE_API_URL: https://${DOMAIN:?Set DOMAIN to the public HTTPS hostname}
+    ports: []
+
+  caddy:
+    image: caddy:2-alpine
+    profiles: [production]
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN to the public HTTPS hostname}
+    depends_on:
+      frontend:
+        condition: service_started
+      backend:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

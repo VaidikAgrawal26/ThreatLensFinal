@@ -25,7 +25,7 @@ Four roles are stored on the server: `administrator`, `soc_member`, `security_an
 7. Response-playbook checklist for evidence handling (session-local only).
 8. Shift-handover high-risk view and CSV export.
 9. Evidence detail opens the actual scan record.
-10. Exportable scan history for handover.
+10. Exact SHA-256 duplicate grouping to reduce repeat triage.
 
 ## Security Analyst workspace
 1. Overview and ten scan-derived chart types.
@@ -55,4 +55,4 @@ Four roles are stored on the server: `administrator`, `soc_member`, `security_an
 The Overview contains line, bar, donut, heatmap, scatter, stacked bar, funnel, histogram, radar and treemap visualizations. Each uses stored records. Role-specific captions explain the intended use. See [Dashboard Analytics](DASHBOARD_ANALYTICS.md) for definitions and limitations. Ground-truth accuracy metrics are intentionally omitted unless an evaluation dataset with labels is provided.
 
 ## Remaining boundaries
-This is a local prototype, not a production SOC suite. It has no persisted incident assignment/status workflow, no external threat-feed synchronization, no runtime telemetry, no curated malware repository, no SHAP-based explanations, and no tamper-evident audit log. YARA engine and rule collections are separate; the ZIP includes only the illustrative demo rule and the local rule-management interface.
+This is a local prototype, not a production SOC suite. Incident creation, assignment and status are persisted through the incident API; the response-playbook checklist is browser-local. There is no external threat-feed synchronization, runtime telemetry, curated malware repository, SHAP-based explanation, or tamper-evident audit log. YARA engine and rule collections are separate; the project includes only an illustrative demo rule and local rule-management interface. See [the role acceptance matrix](ROLE_FEATURE_ACCEPTANCE_MATRIX.md) for the ten distinct workflows presented per role and [the implementation plan](IMPLEMENTATION_PLAN.md) for deployment work that remains.

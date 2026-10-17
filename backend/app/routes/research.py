@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from app.db import get_db
@@ -10,12 +10,15 @@ ROLES=("administrator","security_analyst","researcher")
 def audit(db,user,action,target,details=None): db.add(AuditLog(user_id=user.id,actor_email=user.email,action=action,target=str(target),details=details or {}))
 def ann(a): return {"id":a.id,"scan_id":a.scan_id,"ground_truth":a.ground_truth,"family":a.family,"dataset_source":a.dataset_source,"notes":a.notes,"created_by":a.created_by,"created_at":a.created_at,"updated_at":a.updated_at}
 @router.get("/annotations")
-def annotations(db:Session=Depends(get_db),user:User=Depends(require_roles(*ROLES))): return [ann(a) for a in db.query(ResearchAnnotation).order_by(desc(ResearchAnnotation.updated_at)).limit(5000).all()]
+def annotations(limit:int=Query(default=500,ge=1,le=2000),offset:int=Query(default=0,ge=0),db:Session=Depends(get_db),user:User=Depends(require_roles(*ROLES))):
+    return [ann(a) for a in db.query(ResearchAnnotation).order_by(desc(ResearchAnnotation.updated_at)).offset(offset).limit(limit).all()]
 @router.post("/annotations")
 def upsert_annotation(payload:AnnotationCreate,db:Session=Depends(get_db),user:User=Depends(require_roles(*ROLES))):
     if not db.get(Scan,payload.scan_id): raise HTTPException(404,"Scan not found")
     a=db.query(ResearchAnnotation).filter(ResearchAnnotation.scan_id==payload.scan_id).first()
     if a:
+        if user.role!="administrator" and a.created_by!=user.id:
+            raise HTTPException(403,"Only the annotation creator or an administrator can update this review")
         a.ground_truth=payload.ground_truth;a.family=payload.family;a.dataset_source=payload.dataset_source.strip();a.notes=payload.notes
         action="research.annotation_updated"
     else:
@@ -39,6 +42,7 @@ def delete_note(note_id:int,db:Session=Depends(get_db),user:User=Depends(require
     n=db.get(ExperimentNote,note_id)
     if not n: raise HTTPException(404,"Note not found")
     if user.role!="administrator" and n.user_id!=user.id: raise HTTPException(403,"You can only remove your own notes")
+    audit(db,user,"research.note_deleted",n.id)
     db.delete(n);db.commit();return {"message":"Note removed"}
 @router.get("/summary")
 def summary(db:Session=Depends(get_db),user:User=Depends(require_roles(*ROLES))):

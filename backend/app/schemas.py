@@ -11,6 +11,9 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
     role: Role | None = None
+class ProfileUpdate(BaseModel):
+    email: EmailStr | None = None
+    full_name: str | None = Field(default=None, min_length=2, max_length=120)
 class UserOut(BaseModel):
     model_config=ConfigDict(from_attributes=True)
     id: int; email: EmailStr; full_name: str; role: Role; active: bool; created_at: datetime; last_login_at: datetime|None=None
